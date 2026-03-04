@@ -9,12 +9,12 @@ A CLI for Bilibili — browse videos, users, favorites from the terminal 📺
 - 🎬 **Video** — details, subtitles, AI summary, comments, related videos
 - 👤 **User** — profile, video list, following list
 - 🔍 **Search** — search users or videos by keyword
-- � **Trending** — hot videos and site-wide ranking
+- 🔥 **Trending** — hot videos and site-wide ranking
 - 📰 **Feed** — dynamic timeline from your follows
-- �📂 **Favorites** — browse favorite folders and watch-later list
+- 📂 **Favorites** — browse favorite folders and watch-later list
 - 👍 **Interactions** — like, coin, triple (一键三连)
 - 🔐 **Smart auth** — auto-extracts cookies from Chrome/Firefox, or QR code login
-- 📊 **JSON output** — all commands support `--json` for scripting
+- 📊 **JSON output** — major query commands support `--json` for scripting
 
 ## Installation
 
@@ -32,6 +32,14 @@ Or from source:
 git clone git@github.com:jackwener/bilibili-cli.git
 cd bilibili-cli
 uv sync
+```
+
+Run tests in the project environment:
+
+```bash
+uv run pytest -q
+uv run ruff check .
+uv run mypy bili_cli
 ```
 
 ## Usage
@@ -56,10 +64,13 @@ bili user "影视飓风"                     # Search by name
 bili user-videos 946974 --max 20        # Video list
 
 # Discovery
-bili hot                                # Trending videos
-bili rank                               # Site-wide ranking
+bili hot                                # Trending videos (page 1)
+bili hot --page 2 --max 10              # Page 2, top 10
+bili rank                               # Site-wide ranking (3-day)
+bili rank --day 7 --max 30              # 7-day ranking, top 30
 bili search "关键词"                     # Search users
-bili search "关键词" --type video        # Search videos
+bili search "关键词" --type video --max 5 # Search videos (top 5)
+bili search "关键词" --page 2            # Next page
 bili feed                               # Dynamic timeline
 
 # Collections
@@ -82,7 +93,8 @@ bilibili-cli uses a 3-tier authentication strategy:
 2. **Browser cookies** — auto-extracts from Chrome, Firefox, Edge, or Brave
 3. **QR code login** — `bili login` displays a QR code in the terminal
 
-Credentials are validated on each use. Expired cookies are automatically cleared.
+Credentials are validated on use for authenticated commands. Expired cookies are automatically cleared, while transient network validation failures keep local credentials for best-effort fallback.
+`bili status` exits with code `0` only when authenticated; otherwise it exits with `1`.
 
 Most commands work without login. Subtitles, favorites, feed, and interactions require authentication.
 
@@ -126,7 +138,7 @@ All bilibili-cli commands are available in OpenClaw after installation.
 - 📂 **收藏** — 收藏夹浏览、稍后再看
 - 👍 **互动** — 点赞、投币、一键三连
 - 🔐 **智能认证** — 自动提取浏览器 Cookie，或扫码登录
-- 📊 **JSON 输出** — 所有命令支持 `--json`，方便脚本调用
+- 📊 **JSON 输出** — 主要查询命令支持 `--json`，方便脚本调用
 
 ## 安装
 
@@ -167,10 +179,13 @@ bili user "影视飓风"                     # 按用户名搜索
 bili user-videos 946974 --max 20        # 视频列表
 
 # 发现
-bili hot                                # 热门视频
-bili rank                               # 全站排行榜
+bili hot                                # 热门视频（第1页）
+bili hot --page 2 --max 10              # 第2页，前10条
+bili rank                               # 全站排行榜（3日）
+bili rank --day 7 --max 30              # 7日榜，前30条
 bili search "关键词"                     # 搜索用户
-bili search "关键词" --type video        # 搜索视频
+bili search "关键词" --type video --max 5 # 搜索视频（前5条）
+bili search "关键词" --page 2            # 第2页结果
 bili feed                               # 动态时间线
 
 # 收藏
@@ -192,7 +207,7 @@ bilibili-cli 采用三级认证策略：
 2. **浏览器 Cookie** — 自动从 Chrome、Firefox、Edge、Brave 提取
 3. **扫码登录** — `bili login` 在终端显示二维码
 
-凭证在每次使用时自动验证，过期 Cookie 会自动清除。
+需要认证的命令会自动校验凭证。过期 Cookie 会自动清除；如果只是临时网络异常，不会误清本地凭证（会以 best-effort 继续尝试）。
 
 大部分命令无需登录。字幕、收藏夹、动态和互动操作需要登录。
 

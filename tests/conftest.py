@@ -1,7 +1,7 @@
 """Shared test fixtures."""
 
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 from bilibili_api.utils.network import Credential
 
 

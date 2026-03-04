@@ -1,8 +1,12 @@
 """Tests for client.py — mock bilibili-api internals."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from bilibili_api.exceptions import CredentialNoSessdataException, NetworkException
+
 from bili_cli import client
+from bili_cli.exceptions import AuthenticationError, BiliError, InvalidBvidError, NetworkError
 
 
 @pytest.mark.asyncio
@@ -13,6 +17,22 @@ async def test_get_video_info(mock_video_info):
         assert result["title"] == "测试视频标题"
         assert result["stat"]["view"] == 15000
         MockVideo.assert_called_once_with(bvid="BV1test123", credential=None)
+
+
+@pytest.mark.asyncio
+async def test_get_video_info_maps_network_exception():
+    with patch("bili_cli.client.video.Video") as MockVideo:
+        MockVideo.return_value.get_info = AsyncMock(side_effect=NetworkException(-1, "timeout"))
+        with pytest.raises(NetworkError):
+            await client.get_video_info("BV1test123")
+
+
+@pytest.mark.asyncio
+async def test_get_video_info_maps_auth_exception():
+    with patch("bili_cli.client.video.Video") as MockVideo:
+        MockVideo.return_value.get_info = AsyncMock(side_effect=CredentialNoSessdataException())
+        with pytest.raises(AuthenticationError):
+            await client.get_video_info("BV1test123")
 
 
 @pytest.mark.asyncio
@@ -109,3 +129,131 @@ async def test_triple_video(mock_credential):
         result = await client.triple_video("BV1test", credential=mock_credential)
         assert result["like"] is True
         assert result["coin"] is True
+
+
+@pytest.mark.asyncio
+async def test_coin_video(mock_credential):
+    with patch("bili_cli.client.video.Video") as MockVideo:
+        MockVideo.return_value.pay_coin = AsyncMock(return_value={})
+        await client.coin_video("BV1test", credential=mock_credential, num=2)
+        MockVideo.return_value.pay_coin.assert_called_once_with(num=2)
+
+
+@pytest.mark.asyncio
+async def test_get_user_videos_respects_count():
+    page1 = {"list": {"vlist": [{"bvid": "BV1a"}, {"bvid": "BV1b"}, {"bvid": "BV1c"}]}}
+    with patch("bili_cli.client.user.User") as MockUser:
+        MockUser.return_value.get_videos = AsyncMock(return_value=page1)
+        result = await client.get_user_videos(uid=1, count=2)
+        assert len(result) == 2
+        assert result[0]["bvid"] == "BV1a"
+        MockUser.return_value.get_videos.assert_called_once_with(ps=2, pn=1)
+
+
+@pytest.mark.asyncio
+async def test_get_user_videos_returns_partial_on_page_error():
+    page1 = {"list": {"vlist": [{"bvid": "BV1a"}, {"bvid": "BV1b"}]}}
+    with patch("bili_cli.client.user.User") as MockUser:
+        MockUser.return_value.get_videos = AsyncMock(
+            side_effect=[page1, Exception("network fail")]
+        )
+        result = await client.get_user_videos(uid=1, count=5)
+        assert len(result) == 2
+        assert [v["bvid"] for v in result] == ["BV1a", "BV1b"]
+
+
+@pytest.mark.asyncio
+async def test_get_user_videos_raises_on_first_page_error():
+    with patch("bili_cli.client.user.User") as MockUser:
+        MockUser.return_value.get_videos = AsyncMock(side_effect=Exception("first page failed"))
+        with pytest.raises(BiliError):
+            await client.get_user_videos(uid=1, count=5)
+
+
+@pytest.mark.asyncio
+async def test_get_toview_by_name(mock_credential):
+    data = [
+        {
+            "name": "稍后再看",
+            "mediaListResponse": {"list": [{"bvid": "BV1later"}], "count": 1},
+        }
+    ]
+    with patch("bili_cli.client.homepage.get_favorite_list_and_toview", new_callable=AsyncMock, return_value=data):
+        result = await client.get_toview(mock_credential)
+        assert result["count"] == 1
+        assert result["list"][0]["bvid"] == "BV1later"
+
+
+@pytest.mark.asyncio
+async def test_get_toview_by_id(mock_credential):
+    data = [
+        {
+            "id": 2,
+            "mediaListResponse": {"list": [{"bvid": "BV1id"}], "count": 1},
+        }
+    ]
+    with patch("bili_cli.client.homepage.get_favorite_list_and_toview", new_callable=AsyncMock, return_value=data):
+        result = await client.get_toview(mock_credential)
+        assert result["count"] == 1
+        assert result["list"][0]["bvid"] == "BV1id"
+
+
+@pytest.mark.asyncio
+async def test_get_toview_empty_when_not_found(mock_credential):
+    with patch("bili_cli.client.homepage.get_favorite_list_and_toview", new_callable=AsyncMock, return_value=[]):
+        result = await client.get_toview(mock_credential)
+        assert result == {"list": [], "count": 0}
+
+
+@pytest.mark.asyncio
+async def test_get_toview_unexpected_payload_type_returns_empty(mock_credential):
+    with patch("bili_cli.client.homepage.get_favorite_list_and_toview", new_callable=AsyncMock, return_value={"x": 1}):
+        result = await client.get_toview(mock_credential)
+        assert result == {"list": [], "count": 0}
+
+
+@pytest.mark.asyncio
+async def test_get_rank_videos_week_mode():
+    mock_data = {"list": []}
+    with patch("bili_cli.client.rank.get_rank", new_callable=AsyncMock, return_value=mock_data) as mock_rank:
+        await client.get_rank_videos(day=7)
+        mock_rank.assert_called_once_with(day=client.rank.RankDayType.WEEK)
+
+
+def test_extract_bvid_invalid_type():
+    with pytest.raises(InvalidBvidError):
+        client.extract_bvid("BV123")
+
+
+@pytest.mark.asyncio
+async def test_get_video_subtitle_network_error():
+    with patch("bili_cli.client.video.Video") as MockVideo:
+        MockVideo.return_value.get_pages = AsyncMock(return_value=[{"cid": 1}])
+        MockVideo.return_value.get_player_info = AsyncMock(
+            return_value={"subtitle": {"subtitles": [{"lan": "zh-CN", "subtitle_url": "https://s.test/sub.json"}]}}
+        )
+
+        class FakeSession:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+            def get(self, _url):
+                raise client.aiohttp.ClientError("boom")
+
+        with patch("bili_cli.client.aiohttp.ClientSession", FakeSession):
+            with pytest.raises(NetworkError):
+                await client.get_video_subtitle("BV1ABcsztEcY")
+
+
+@pytest.mark.asyncio
+async def test_get_video_ai_conclusion_returns_empty_for_no_pages():
+    with patch("bili_cli.client.video.Video") as MockVideo:
+        MockVideo.return_value.get_pages = AsyncMock(return_value=[])
+        result = await client.get_video_ai_conclusion("BV1ABcsztEcY")
+        assert result == {}

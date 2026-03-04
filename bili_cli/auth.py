@@ -14,9 +14,10 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
+from typing import Literal
 
-from bilibili_api.utils.network import Credential
 from bilibili_api.login_v2 import QrCodeLogin, QrCodeLoginEvents
+from bilibili_api.utils.network import Credential
 
 logger = logging.getLogger(__name__)
 
@@ -27,47 +28,84 @@ CREDENTIAL_FILE = CONFIG_DIR / "credential.json"
 REQUIRED_COOKIES = {"SESSDATA"}
 
 
-def get_credential() -> Credential | None:
-    """Try all auth methods in order. Returns validated Credential or None."""
+AuthMode = Literal["optional", "read", "write"]
+
+
+def get_credential(mode: AuthMode = "read") -> Credential | None:
+    """Try auth methods in order and return credential according to mode.
+
+    - optional: only load saved credential (no network validation, no browser scan)
+    - read: prefer validated credential; if validation is indeterminate (network),
+      return saved/browser credential as best effort
+    - write: same as read, but require bili_jct capability
+    """
+    require_write = mode == "write"
+
     # 1. Saved credential file
     cred = _load_saved_credential()
     if cred:
-        if _validate_credential(cred):
+        if mode == "optional":
+            return cred
+        validation = _validate_credential(cred, require_write=require_write)
+        if validation is True:
             logger.info("Loaded valid credential from %s", CREDENTIAL_FILE)
             return cred
-        else:
+        if validation is None:
+            logger.warning("Credential validation failed due to network; using saved credential as best effort")
+            return cred
+        if validation is False:
             logger.warning("Saved credential is expired, clearing")
             clear_credential()
+
+    if mode == "optional":
+        return None
 
     # 2. Browser cookie extraction
     cred = _extract_browser_credential()
     if cred:
-        if _validate_credential(cred):
+        validation = _validate_credential(cred, require_write=require_write)
+        if validation is True:
             logger.info("Extracted valid credential from local browser")
             save_credential(cred)
             return cred
-        else:
+        if validation is None:
+            logger.warning("Skipping browser credential validation due to network; using best effort")
+            return cred
+        if validation is False:
             logger.warning("Browser cookies are expired/invalid")
 
     return None
 
 
-def _validate_credential(cred: Credential) -> bool:
-    """Check if a credential is still valid by calling the API."""
-    import asyncio
+def _validate_credential(cred: Credential, require_write: bool = False) -> bool | None:
+    """Check if a credential is valid.
+
+    Returns:
+      - True: credential validated by API
+      - False: credential confirmed invalid or missing required fields
+      - None: validation is indeterminate due to network/runtime issues
+    """
     from bilibili_api import user
+    from bilibili_api.exceptions import NetworkException
+
+    if not getattr(cred, "sessdata", ""):
+        return False
+    if require_write and not getattr(cred, "bili_jct", ""):
+        return False
 
     async def _check():
         try:
             await user.get_self_info(cred)
             return True
+        except NetworkException:
+            return None
         except Exception:
             return False
 
     try:
         return asyncio.run(_check())
     except Exception:
-        return False
+        return None
 
 
 def _load_saved_credential() -> Credential | None:
@@ -127,14 +165,21 @@ print(json.dumps({"error": "no_cookies"}))
     try:
         result = subprocess.run(
             [sys.executable, "-c", extract_script],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
 
         if result.returncode != 0:
             logger.debug("Cookie extraction subprocess failed: %s", result.stderr)
             return None
 
-        data = json.loads(result.stdout.strip())
+        output = result.stdout.strip()
+        if not output:
+            logger.debug("Cookie extraction returned empty output")
+            return None
+
+        data = json.loads(output)
 
         if "error" in data:
             if data["error"] == "not_installed":
@@ -145,6 +190,9 @@ print(json.dumps({"error": "no_cookies"}))
 
         cookies = data["cookies"]
         browser_name = data["browser"]
+        if not REQUIRED_COOKIES.issubset(cookies):
+            logger.debug("Browser cookies missing required keys: %s", REQUIRED_COOKIES)
+            return None
         logger.info(
             "Found valid cookies in %s (%d cookies)", browser_name, len(cookies)
         )

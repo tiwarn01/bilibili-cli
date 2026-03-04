@@ -1,15 +1,20 @@
 """Tests for auth module."""
 
 import json
-import pytest
-from pathlib import Path
-from unittest.mock import patch, AsyncMock, MagicMock
+import subprocess
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+from bilibili_api.exceptions import NetworkException
 from bilibili_api.utils.network import Credential
+
 from bili_cli.auth import (
+    _extract_browser_credential,
     _load_saved_credential,
-    save_credential,
-    clear_credential,
     _validate_credential,
+    clear_credential,
+    get_credential,
+    save_credential,
 )
 
 
@@ -84,3 +89,100 @@ def test_validate_expired_credential():
     with patch("bilibili_api.user.get_self_info", new_callable=AsyncMock, side_effect=Exception("expired")):
         cred = Credential(sessdata="expired")
         assert _validate_credential(cred) is False
+
+
+def test_validate_network_error_returns_none():
+    with patch("bilibili_api.user.get_self_info", new_callable=AsyncMock, side_effect=NetworkException(-1, "timeout")):
+        cred = Credential(sessdata="valid")
+        assert _validate_credential(cred) is None
+
+
+def test_validate_credential_requires_bili_jct_for_write():
+    with patch("bilibili_api.user.get_self_info", new_callable=AsyncMock, return_value={"mid": 1}):
+        cred = Credential(sessdata="valid", bili_jct="")
+        assert _validate_credential(cred, require_write=True) is False
+
+
+def test_get_credential_uses_saved_when_valid():
+    saved = Credential(sessdata="saved", bili_jct="jct")
+    with patch("bili_cli.auth._load_saved_credential", return_value=saved), \
+         patch("bili_cli.auth._validate_credential", return_value=True) as mock_validate, \
+         patch("bili_cli.auth._extract_browser_credential") as mock_extract:
+        cred = get_credential()
+        assert cred is saved
+        mock_validate.assert_called_once_with(saved, require_write=False)
+        mock_extract.assert_not_called()
+
+
+def test_get_credential_falls_back_to_browser_and_saves():
+    browser = Credential(sessdata="browser", bili_jct="jct")
+    with patch("bili_cli.auth._load_saved_credential", return_value=None), \
+         patch("bili_cli.auth._extract_browser_credential", return_value=browser), \
+         patch("bili_cli.auth._validate_credential", return_value=True), \
+         patch("bili_cli.auth.save_credential") as mock_save:
+        cred = get_credential()
+        assert cred is browser
+        mock_save.assert_called_once_with(browser)
+
+
+def test_get_credential_keeps_saved_on_validation_network_error():
+    saved = Credential(sessdata="saved", bili_jct="jct")
+    with patch("bili_cli.auth._load_saved_credential", return_value=saved), \
+         patch("bili_cli.auth._validate_credential", return_value=None), \
+         patch("bili_cli.auth.clear_credential") as mock_clear, \
+         patch("bili_cli.auth._extract_browser_credential") as mock_extract:
+        cred = get_credential()
+        assert cred is saved
+        mock_clear.assert_not_called()
+        mock_extract.assert_not_called()
+
+
+def test_get_credential_clears_expired_saved_and_returns_none_when_browser_invalid():
+    saved = Credential(sessdata="saved", bili_jct="jct")
+    browser = Credential(sessdata="browser", bili_jct="jct")
+    with patch("bili_cli.auth._load_saved_credential", return_value=saved), \
+         patch("bili_cli.auth._extract_browser_credential", return_value=browser), \
+         patch("bili_cli.auth._validate_credential", side_effect=[False, False]), \
+         patch("bili_cli.auth.clear_credential") as mock_clear, \
+         patch("bili_cli.auth.save_credential") as mock_save:
+        cred = get_credential()
+        assert cred is None
+        mock_clear.assert_called_once()
+        mock_save.assert_not_called()
+
+
+def test_get_credential_optional_uses_saved_without_validation():
+    saved = Credential(sessdata="saved", bili_jct="jct")
+    with patch("bili_cli.auth._load_saved_credential", return_value=saved), \
+         patch("bili_cli.auth._validate_credential") as mock_validate, \
+         patch("bili_cli.auth._extract_browser_credential") as mock_extract:
+        cred = get_credential(mode="optional")
+        assert cred is saved
+        mock_validate.assert_not_called()
+        mock_extract.assert_not_called()
+
+
+def test_get_credential_write_rejects_missing_bili_jct():
+    saved = Credential(sessdata="saved", bili_jct="")
+    with patch("bili_cli.auth._load_saved_credential", return_value=saved), \
+         patch("bili_cli.auth._extract_browser_credential", return_value=None), \
+         patch("bili_cli.auth._validate_credential", return_value=False):
+        cred = get_credential(mode="write")
+        assert cred is None
+
+
+def test_extract_browser_credential_timeout_returns_none():
+    with patch("bili_cli.auth.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="x", timeout=1)):
+        assert _extract_browser_credential() is None
+
+
+def test_extract_browser_credential_bad_json_returns_none():
+    fake = SimpleNamespace(returncode=0, stdout="not-json", stderr="")
+    with patch("bili_cli.auth.subprocess.run", return_value=fake):
+        assert _extract_browser_credential() is None
+
+
+def test_extract_browser_credential_empty_output_returns_none():
+    fake = SimpleNamespace(returncode=0, stdout="   ", stderr="")
+    with patch("bili_cli.auth.subprocess.run", return_value=fake):
+        assert _extract_browser_credential() is None
