@@ -7,6 +7,7 @@ A CLI for Bilibili — browse videos, users, favorites from the terminal 📺
 ## Features
 
 - 🎬 **Video** — details, subtitles, AI summary, comments, related videos
+- 🎵 **Audio** — extract audio and split into ASR-ready WAV segments
 - 👤 **User** — profile, video list, following list
 - 🔍 **Search** — search users or videos by keyword
 - 🔥 **Trending** — hot videos and site-wide ranking
@@ -80,6 +81,12 @@ bili following                          # Following list
 bili watch-later                        # Watch later
 bili history                            # Watch history
 
+# Audio extraction
+bili audio BV1ABcsztEcY                 # Download + split into 25s WAV segments
+bili audio BV1ABcsztEcY --segment 60    # 60s per segment
+bili audio BV1ABcsztEcY --no-split      # Full m4a, no splitting
+bili audio BV1ABcsztEcY -o ~/data/      # Custom output directory
+
 # Interactions
 bili like BV1ABcsztEcY                  # Like
 bili coin BV1ABcsztEcY                  # Give coin
@@ -132,6 +139,7 @@ All bilibili-cli commands are available in OpenClaw after installation.
 ## 功能特性
 
 - 🎬 **视频** — 详情、字幕、AI 总结、评论、相关推荐
+- 🎵 **音频** — 提取视频音频，切分为语音识别 (ASR) 可用的 WAV 片段
 - 👤 **用户** — UP 主资料、视频列表、关注列表
 - 🔍 **搜索** — 按关键词搜索用户或视频
 - 🔥 **发现** — 热门视频、全站排行榜
@@ -194,6 +202,12 @@ bili favorites                          # 收藏夹列表
 bili following                          # 关注列表
 bili watch-later                        # 稍后再看
 bili history                            # 观看历史
+
+# 音频提取
+bili audio BV1ABcsztEcY                 # 下载并切分为 25 秒 WAV 片段
+bili audio BV1ABcsztEcY --segment 60    # 每段 60 秒
+bili audio BV1ABcsztEcY --no-split      # 完整 m4a，不切分
+bili audio BV1ABcsztEcY -o ~/data/      # 自定义输出目录
 
 # 互动
 bili like BV1ABcsztEcY                  # 点赞

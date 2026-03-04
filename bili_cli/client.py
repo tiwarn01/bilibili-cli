@@ -440,7 +440,7 @@ _DOWNLOAD_HEADERS = {
 
 async def get_audio_url(bvid: str, credential: Credential | None = None) -> str:
     """Get the best audio stream URL for a video (DASH preferred)."""
-    from bilibili_api.video import VideoDownloadURLDataDetecter, AudioQuality
+    from bilibili_api.video import AudioQuality, VideoDownloadURLDataDetecter
 
     v = video.Video(bvid=bvid, credential=credential)
     download_data = await _call_api("获取下载地址", v.get_download_url(page_index=0))
@@ -509,13 +509,13 @@ def split_audio(input_path: str, output_dir: str, segment_seconds: int = 30) -> 
         raise BiliError(
             "音频切分需要 PyAV 库。请安装: pip install av\n"
             "或: uv add av"
-        )
+        ) from None
 
     import os
     os.makedirs(output_dir, exist_ok=True)
 
     input_container = pyav.open(input_path)
-    audio_stream = input_container.streams.audio[0]
+    input_container.streams.audio[0]  # Verify audio stream exists
 
     # Decode all frames
     all_frames = []

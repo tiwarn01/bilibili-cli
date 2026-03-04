@@ -83,6 +83,18 @@ bili following                 # Following list
 bili history                   # Watch later list
 ```
 
+### Audio Extraction
+
+```bash
+# Download audio and split into ASR-ready WAV segments (25s each, 16kHz mono)
+bili audio BV1ABcsztEcY                 # Split to /tmp/bilibili-cli/{title}/
+bili audio BV1ABcsztEcY --segment 60    # 60s per segment
+bili audio BV1ABcsztEcY --no-split      # Full m4a file, no splitting
+bili audio BV1ABcsztEcY -o ~/data/      # Custom output directory
+```
+
+Requires `av` (PyAV): `pipx inject bilibili-cli av` or `pip install av`
+
 ### Interactions (require login)
 
 ```bash
@@ -118,6 +130,10 @@ bili user 946974 --json | jq '.user_info.name'       # Username
 ```bash
 # Get a video's subtitle text for summarization
 bili video BV1ABcsztEcY --subtitle
+
+# Extract audio for speech-to-text (ASR)
+# Segments are saved to /tmp/bilibili-cli/{title}/seg_000.wav, seg_001.wav, ...
+bili audio BV1ABcsztEcY --segment 25
 
 # Find a user's latest video BV ID
 bili user-videos 946974 --max 1 --json | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['bvid'])"

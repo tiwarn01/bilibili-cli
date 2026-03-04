@@ -8,8 +8,7 @@ import tempfile
 
 import click
 
-from .common import console, exit_error, extract_bvid_or_exit, get_credential, run, run_or_exit
-
+from .common import console, exit_error, extract_bvid_or_exit, get_credential, run_or_exit
 
 DEFAULT_TMP_DIR = os.path.join(tempfile.gettempdir(), "bilibili-cli")
 
@@ -67,7 +66,7 @@ def audio(bv_or_url: str, segment: int, no_split: bool, output: str | None):
     if no_split:
         # Download full audio without splitting
         out_file = os.path.join(out_dir, f"{safe_title}.m4a")
-        console.print(f"[dim]下载音频中...[/dim]")
+        console.print("[dim]下载音频中...[/dim]")
         nbytes = run_or_exit(client.download_audio(audio_url, out_file), "下载音频")
         size_mb = nbytes / (1024 * 1024)
         console.print(f"[green]✅ 音频已保存: {out_file} ({size_mb:.1f} MB)[/green]")
@@ -76,7 +75,7 @@ def audio(bv_or_url: str, segment: int, no_split: bool, output: str | None):
         os.makedirs(out_dir, exist_ok=True)
         tmp_path = os.path.join(out_dir, "_raw.m4s")
 
-        console.print(f"[dim]下载音频中...[/dim]")
+        console.print("[dim]下载音频中...[/dim]")
         nbytes = run_or_exit(client.download_audio(audio_url, tmp_path), "下载音频")
         size_mb = nbytes / (1024 * 1024)
         console.print(f"[dim]下载完成 ({size_mb:.1f} MB)，切分中...[/dim]")
@@ -92,7 +91,7 @@ def audio(bv_or_url: str, segment: int, no_split: bool, output: str | None):
 
         console.print(f"[green]✅ 切分完成: {len(segments)} 段 (每段 ~{segment}s)[/green]")
         console.print(f"[green]   输出目录: {out_dir}[/green]")
-        for i, seg in enumerate(segments):
+        for _i, seg in enumerate(segments):
             basename = os.path.basename(seg)
             size_kb = os.path.getsize(seg) / 1024
             console.print(f"[dim]   {basename}  ({size_kb:.0f} KB)[/dim]")
