@@ -227,14 +227,18 @@ def watch_later(as_json: bool):
 
 
 @click.command()
+@click.option("--offset", default="", help="分页游标；留空为最新。可使用上一页返回的 next_offset/offset。")
 @click.option("--json", "as_json", is_flag=True, help="输出原始 JSON。")
-def feed(as_json: bool):
+def feed(offset: str, as_json: bool):
     """查看动态时间线。"""
     from .. import client
 
     cred = common.require_login()
 
-    data = common.run_or_exit(client.get_dynamic_feed(credential=cred), "获取动态失败")
+    data = common.run_or_exit(
+        client.get_dynamic_feed(offset=offset, credential=cred),
+        "获取动态失败",
+    )
 
     if as_json:
         click.echo(json.dumps(data, ensure_ascii=False, indent=2))
@@ -282,3 +286,7 @@ def feed(as_json: bool):
         if comment_count or like_count:
             common.console.print(f"  [dim]👍 {like_count}  💬 {comment_count}[/dim]")
         common.console.print()
+
+    next_offset = data.get("next_offset") or data.get("offset")
+    if next_offset not in ("", None):
+        common.console.print(f"[dim]下一页：bili feed --offset {next_offset}[/dim]")

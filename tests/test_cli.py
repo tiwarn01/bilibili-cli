@@ -449,6 +449,15 @@ def test_feed_api_error_returns_nonzero(runner):
         assert "获取动态失败" in result.output
 
 
+def test_feed_forwards_offset(runner):
+    mock_cred = MagicMock()
+    with patch("bili_cli.commands.common.get_credential", return_value=mock_cred), \
+         patch("bili_cli.client.get_dynamic_feed", new_callable=AsyncMock, return_value={"items": []}) as mock_feed:
+        result = runner.invoke(cli, ["feed", "--offset", "123"])
+        assert result.exit_code == 0
+        mock_feed.assert_awaited_once_with(offset="123", credential=mock_cred)
+
+
 # ===== Interactions =====
 
 

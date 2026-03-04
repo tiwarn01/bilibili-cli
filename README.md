@@ -73,6 +73,7 @@ bili search "关键词"                     # Search users
 bili search "关键词" --type video --max 5 # Search videos (top 5)
 bili search "关键词" --page 2            # Next page
 bili feed                               # Dynamic timeline
+bili feed --offset 1234567890           # Next page via returned cursor
 
 # Collections
 bili favorites                          # Favorite folders
@@ -196,6 +197,7 @@ bili search "关键词"                     # 搜索用户
 bili search "关键词" --type video --max 5 # 搜索视频（前5条）
 bili search "关键词" --page 2            # 第2页结果
 bili feed                               # 动态时间线
+bili feed --offset 1234567890           # 使用上一页游标翻页
 
 # 收藏
 bili favorites                          # 收藏夹列表

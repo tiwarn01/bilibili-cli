@@ -228,6 +228,34 @@ async def test_get_toview_unexpected_payload_type_returns_empty(mock_credential)
 
 
 @pytest.mark.asyncio
+async def test_get_dynamic_feed_requires_credential():
+    with pytest.raises(AuthenticationError):
+        await client.get_dynamic_feed()
+
+
+@pytest.mark.asyncio
+async def test_get_dynamic_feed_uses_dynamic_page_info(mock_credential):
+    data = {"items": []}
+    with patch("bili_cli.client.dynamic.get_dynamic_page_info", new_callable=AsyncMock, return_value=data) as mock_feed:
+        result = await client.get_dynamic_feed(credential=mock_credential)
+        assert result == data
+        mock_feed.assert_awaited_once_with(credential=mock_credential, pn=1, offset=None)
+
+
+@pytest.mark.asyncio
+async def test_get_dynamic_feed_parses_offset_string(mock_credential):
+    with patch("bili_cli.client.dynamic.get_dynamic_page_info", new_callable=AsyncMock, return_value={"items": []}) as mock_feed:
+        await client.get_dynamic_feed(offset="12345", credential=mock_credential)
+        mock_feed.assert_awaited_once_with(credential=mock_credential, pn=1, offset=12345)
+
+
+@pytest.mark.asyncio
+async def test_get_dynamic_feed_invalid_offset_raises(mock_credential):
+    with pytest.raises(BiliError, match="offset 非法"):
+        await client.get_dynamic_feed(offset="not-int", credential=mock_credential)
+
+
+@pytest.mark.asyncio
 async def test_get_rank_videos_week_mode():
     mock_data = {"list": []}
     with patch("bili_cli.client.rank.get_rank", new_callable=AsyncMock, return_value=mock_data) as mock_rank:

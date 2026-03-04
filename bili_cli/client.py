@@ -13,7 +13,7 @@ import re
 from typing import Any
 
 import aiohttp
-from bilibili_api import comment, favorite_list, homepage, hot, rank, search, user, video
+from bilibili_api import comment, dynamic, favorite_list, homepage, hot, rank, search, user, video
 from bilibili_api.exceptions import (
     ApiException,
     CredentialNoBiliJctException,
@@ -393,17 +393,31 @@ async def get_toview(credential: Credential) -> dict[str, Any]:
 
 
 async def get_dynamic_feed(
-    offset: str = "", credential: Credential | None = None
+    offset: str | int | None = "", credential: Credential | None = None
 ) -> dict[str, Any]:
     """Fetch dynamic feed (动态时间线)."""
     if credential is None:
         raise AuthenticationError("credential is required for dynamic feed")
-    me = await get_self_info(credential)
-    uid = me.get("mid")
-    if uid is None:
-        raise BiliError("获取动态时间线: 当前用户信息缺少 mid")
-    u = user.User(uid=uid, credential=credential)
-    return await _call_api("获取动态时间线", u.get_dynamics_new(offset=offset))
+    if offset in ("", None):
+        parsed_offset = None
+    elif isinstance(offset, int):
+        parsed_offset = offset
+    elif isinstance(offset, str):
+        try:
+            parsed_offset = int(offset)
+        except ValueError as e:
+            raise BiliError(f"获取动态时间线: offset 非法: {offset}") from e
+    else:
+        raise BiliError(f"获取动态时间线: offset 类型不支持: {type(offset).__name__}")
+
+    return await _call_api(
+        "获取动态时间线",
+        dynamic.get_dynamic_page_info(
+            credential=credential,
+            pn=1,
+            offset=parsed_offset,
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
