@@ -27,7 +27,10 @@ def test_save_and_load(tmp_path):
     cred_file = tmp_path / "cred.json"
     with patch("bili_cli.auth.CREDENTIAL_FILE", cred_file), \
          patch("bili_cli.auth.CONFIG_DIR", tmp_path):
-        cred = Credential(sessdata="test_sess", bili_jct="test_jct")
+        cred = Credential(
+            sessdata="test_sess", bili_jct="test_jct",
+            buvid3="buvid3_val", buvid4="buvid4_val", dedeuserid="12345",
+        )
         save_credential(cred)
 
         # File should exist with correct permissions
@@ -38,6 +41,9 @@ def test_save_and_load(tmp_path):
         assert loaded is not None
         assert loaded.sessdata == "test_sess"
         assert loaded.bili_jct == "test_jct"
+        assert loaded.buvid3 == "buvid3_val"
+        assert loaded.buvid4 == "buvid4_val"
+        assert loaded.dedeuserid == "12345"
 
 
 def test_save_creates_directory(tmp_path):

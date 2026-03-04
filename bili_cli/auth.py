@@ -27,6 +27,9 @@ CREDENTIAL_FILE = CONFIG_DIR / "credential.json"
 # Required cookies for a valid Bilibili session
 REQUIRED_COOKIES = {"SESSDATA"}
 
+# Extra cookie fields that help bypass Bilibili's 412 anti-scraping checks
+EXTRA_COOKIE_FIELDS = ("buvid3", "buvid4", "dedeuserid")
+
 
 AuthMode = Literal["optional", "read", "write"]
 
@@ -122,6 +125,9 @@ def _load_saved_credential() -> Credential | None:
             sessdata=sessdata,
             bili_jct=data.get("bili_jct", ""),
             ac_time_value=data.get("ac_time_value", ""),
+            buvid3=data.get("buvid3", ""),
+            buvid4=data.get("buvid4", ""),
+            dedeuserid=data.get("dedeuserid", ""),
         )
     except (json.JSONDecodeError, KeyError) as e:
         logger.warning("Failed to load saved credential: %s", e)
@@ -201,6 +207,9 @@ print(json.dumps({"error": "no_cookies"}))
             sessdata=cookies.get("SESSDATA", ""),
             bili_jct=cookies.get("bili_jct", ""),
             ac_time_value=cookies.get("ac_time_value", ""),
+            buvid3=cookies.get("buvid3", ""),
+            buvid4=cookies.get("buvid4", ""),
+            dedeuserid=cookies.get("DedeUserID", ""),
         )
 
     except subprocess.TimeoutExpired:
@@ -222,6 +231,9 @@ def save_credential(credential: Credential):
         "sessdata": credential.sessdata,
         "bili_jct": credential.bili_jct,
         "ac_time_value": credential.ac_time_value or "",
+        "buvid3": credential.buvid3 or "",
+        "buvid4": credential.buvid4 or "",
+        "dedeuserid": credential.dedeuserid or "",
     }
     CREDENTIAL_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False))
     CREDENTIAL_FILE.chmod(0o600)  # Owner-only read/write
