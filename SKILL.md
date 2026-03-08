@@ -5,6 +5,7 @@ author: jackwener
 version: "1.0.0"
 tags:
   - bilibili
+  - 哔哩哔哩
   - b站
   - video
   - social-media
