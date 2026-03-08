@@ -19,12 +19,12 @@ A CLI tool for interacting with Bilibili (哔哩哔哩). Use it to fetch video i
 
 ```bash
 # Install (requires Python 3.10+)
-pipx install bilibili-cli
-# Or: uv tool install bilibili-cli
+uv tool install bilibili-cli
+# Or: pipx install bilibili-cli
 
 # If you need audio extraction support (requires PyAV)
-pipx install "bilibili-cli[audio]"
-# Or: uv tool install "bilibili-cli[audio]"
+uv tool install "bilibili-cli[audio]"
+# Or: pipx install "bilibili-cli[audio]"
 ```
 
 ## Authentication
@@ -107,7 +107,7 @@ bili history                   # Watch history
 
 ### Audio Extraction
 
-Requires `bilibili-cli[audio]` extra (PyAV). Install with `pipx install "bilibili-cli[audio]"`.
+Requires `bilibili-cli[audio]` extra (PyAV). Install with `uv tool install "bilibili-cli[audio]"`.
 
 ```bash
 # Download audio and split into ASR-ready WAV segments (25s each, 16kHz mono)
