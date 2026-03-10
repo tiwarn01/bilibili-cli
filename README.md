@@ -211,6 +211,16 @@ clawhub install bilibili-cli
 
 All bilibili-cli commands are available in OpenClaw after installation.
 
+## Troubleshooting
+
+- `需要登录` / `not_authenticated` — Run `bili login` to scan QR code, or ensure you're logged in to bilibili.com in Chrome/Firefox/Edge/Brave.
+- `HTTP 412` / `RateLimitError` — Bilibili anti-scraping triggered. Wait a moment and retry, or reduce `--max`.
+- `无法提取 BV 号` / `InvalidBvidError` — Check the BV ID or URL format. Must be `BV` followed by 10 alphanumeric characters.
+- `NetworkError` — Check your network connection. If behind a proxy, ensure it supports the target domain.
+- `当前登录凭证不支持写操作` — Your saved cookies lack `bili_jct`. Run `bili login` to re-authorize with full write permission.
+
+Structured error codes: `not_authenticated`, `permission_denied`, `invalid_input`, `network_error`, `upstream_error`, `not_found`, `rate_limited`, `internal_error`.
+
 ---
 
 ## 推荐项目
@@ -411,6 +421,14 @@ clawhub install bilibili-cli
 ```
 
 安装后即可在 OpenClaw 中直接使用所有 bilibili-cli 命令。
+
+## 常见问题
+
+- `需要登录` — 执行 `bili login` 扫码登录，或确保已在 Chrome/Firefox/Edge/Brave 登录 bilibili.com
+- `HTTP 412` / `RateLimitError` — B 站反爬触发，稍等后重试，或减小 `--max`
+- `无法提取 BV 号` — 检查 BV 号或 URL 格式，必须是 `BV` + 10 位字母数字
+- `NetworkError` — 检查网络连接
+- `当前登录凭证不支持写操作` — 保存的 Cookie 缺少 `bili_jct`，执行 `bili login` 重新授权
 
 ## License
 
