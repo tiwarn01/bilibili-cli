@@ -67,7 +67,7 @@ bili video BV1ABcsztEcY --ai            # Show B站 AI summary
 bili video BV1ABcsztEcY --comments      # Show top comments
 bili video BV1ABcsztEcY --related       # Show related videos
 bili video BV1ABcsztEcY --yaml          # Token-efficient YAML output
-bili video BV1ABcsztEcY --json          # Raw JSON output
+bili video BV1ABcsztEcY --json          # Structured JSON envelope
 ```
 
 ### User
@@ -163,11 +163,12 @@ Major query commands support both `--yaml` and `--json` for machine-readable out
 bili status --yaml                                # Quick structured auth check
 bili video BV1ABcsztEcY --yaml                       # Preferred for AI agents
 bili hot --max 5 --yaml                             # Smaller, token-efficient payload
-bili user 946974 --json | jq '.user_info.name'      # JSON when jq is needed
+bili user 946974 --json | jq -r '.data.user.name'   # JSON when jq is needed
 ```
 
 When stdout is not a TTY, `bilibili-cli` defaults to YAML automatically.
 Use `OUTPUT=yaml|json|rich|auto` to override the default output mode.
+All machine-readable output uses the envelope documented in [SCHEMA.md](./SCHEMA.md).
 
 ## Debugging
 

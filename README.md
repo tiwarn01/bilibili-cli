@@ -29,6 +29,7 @@ A CLI for Bilibili — browse videos, users, favorites from the terminal 📺
 - 🔐 **Smart auth** — auto-extracts cookies from Chrome/Firefox, or QR code login
 - 📊 **Structured output** — major query commands support `--yaml` and `--json`
 - 🤖 **Agent-friendly defaults** — non-TTY stdout defaults to YAML; override with `OUTPUT=yaml|json|rich|auto`
+- 📦 **Stable envelope** — see [SCHEMA.md](./SCHEMA.md) for `ok/schema_version/data/error`
 
 ## Installation
 
@@ -80,7 +81,7 @@ bili video BV1ABcsztEcY --ai            # AI summary
 bili video BV1ABcsztEcY --comments      # Top comments
 bili video BV1ABcsztEcY --related       # Related videos
 bili video BV1ABcsztEcY --yaml          # Agent-friendly YAML
-bili video BV1ABcsztEcY --json          # Raw JSON
+bili video BV1ABcsztEcY --json          # Structured JSON envelope
 
 # Users
 bili user 946974                        # UP profile
