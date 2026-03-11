@@ -37,6 +37,10 @@ uv tool install bilibili-cli
 # If you need audio extraction support (requires PyAV)
 uv tool install "bilibili-cli[audio]"
 # Or: pipx install "bilibili-cli[audio]"
+
+# Upgrade to latest (recommended to avoid API errors)
+uv tool upgrade bilibili-cli
+# Or: pipx upgrade bilibili-cli
 ```
 
 ## Authentication

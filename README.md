@@ -47,6 +47,15 @@ uv tool install "bilibili-cli[audio]"
 pipx install "bilibili-cli[audio]"
 ```
 
+Upgrade to the latest version:
+
+```bash
+uv tool upgrade bilibili-cli
+# Or: pipx upgrade bilibili-cli
+```
+
+> **Tip:** Upgrade regularly to avoid unexpected errors from outdated API handling.
+
 Or from source:
 
 ```bash
@@ -259,6 +268,15 @@ uv tool install "bilibili-cli[audio]"
 # 或
 pipx install "bilibili-cli[audio]"
 ```
+
+升级到最新版本：
+
+```bash
+uv tool upgrade bilibili-cli
+# 或：pipx upgrade bilibili-cli
+```
+
+> **提示：** 建议定期升级，避免因版本过旧导致的 API 调用异常。
 
 或从源码安装：
 
