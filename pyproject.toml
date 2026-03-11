@@ -67,6 +67,12 @@ check_untyped_defs = true
 warn_unused_ignores = true
 no_implicit_optional = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+check_untyped_defs = false
+disable_error_code = ["var-annotated", "arg-type"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

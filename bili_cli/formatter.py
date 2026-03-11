@@ -10,6 +10,7 @@ import json
 import os
 import sys
 from collections.abc import Callable
+from typing import NoReturn
 
 import click
 import yaml
@@ -99,7 +100,7 @@ def _normalize_success_payload(data: object) -> object:
     return success_payload(data)
 
 
-def exit_error(message: str, *, code: str = "api_error", details: object | None = None) -> None:
+def exit_error(message: str, *, code: str = "api_error", details: object | None = None) -> NoReturn:
     """Print an error message and exit with non-zero status."""
     ctx = click.get_current_context(silent=True)
     params = ctx.params if ctx is not None else {}
